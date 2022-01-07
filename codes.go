@@ -267,12 +267,12 @@ func find%[1]s(query primitive.M) ([]*schema.%[1]s, error) {
 	docs := []*schema.%[1]s{}
 	defer cursor.Close(ctx)
 	for cursor.Next(ctx) {
-		var doc *schema.%[1]s
-		err = cursor.Decode(doc)
+		var doc schema.%[1]s
+		err = cursor.Decode(&doc)
 		if err != nil {
 			return nil, err
 		}
-		docs = append(docs, doc)
+		docs = append(docs, &doc)
 	}
 	return docs, nil
 }
@@ -330,6 +330,9 @@ func Upsert%[1]s(%[2]s *schema.%[1]s) error {
 	}
 	query := bson.D{{Key: "$set", Value: update}}
 	err = c.FindOneAndUpdate(context.TODO(), filter, query, &opts).Decode(%[2]s)
+	if err == mongo.ErrNoDocuments {
+		return nil
+	}
 	return err
 }
 `
